@@ -1,6 +1,6 @@
 from ultralytics import YOLO
 
-model = YOLO("runs/detect/train/weights/best.pt")
+model = YOLO("model/best.pt")
 
 results = model.predict(
     source="D:/CleanRiverAI/dataset/test/images/",
