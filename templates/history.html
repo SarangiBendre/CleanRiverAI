@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>History Dashboard</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <style>
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .navbar a {
+            text-decoration: none;
+            margin-left: 15px;
+            font-weight: bold;
+            color: #00796b;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: center;
+        }
+
+        th {
+            background: #0097a7;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background: #f2f2f2;
+        }
+
+        .level-low { color: green; font-weight: bold; }
+        .level-medium { color: orange; font-weight: bold; }
+        .level-high { color: red; font-weight: bold; }
+
+        img {
+            width: 80px;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+<!-- NAVBAR -->
+<div class="navbar">
+    <h2>📊 History Dashboard</h2>
+    <div>
+        <a href="/">⬅ Back</a>
+        <a href="/logout">🚪 Logout</a>
+    </div>
+</div>
+
+<div class="card">
+
+<table>
+
+<tr>
+<th>Date</th>
+<th>River</th>
+<th>Location</th>
+<th>Count</th>
+<th>Level</th>
+<th>Image</th>
+</tr>
+
+{% for row in data %}
+<tr>
+<td>{{ row[8] }}<br>{{ row[9] }}</td>
+
+<td>{{ row[2] }}</td>
+
+<td>{{ row[3] }}</td>
+
+<td>{{ row[4] }}</td>
+
+<td>
+{% if row[5] == "NOT POLLUTED" %}
+<span class="level-low">NOT POLLUTED</span>
+
+{% elif row[5] == "LOW" %}
+<span class="level-low">LOW</span>
+
+{% elif row[5] == "MEDIUM" %}
+<span class="level-medium">MEDIUM</span>
+
+{% else %}
+<span class="level-high">HIGH</span>
+{% endif %}
+</td>
+
+<td>
+<img src="/{{ row[6] }}">
+</td>
+
+</tr>
+{% endfor %}
+
+</table>
+
+</div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login - Clean River AI</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+        }
+
+        .main {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .auth-container {
+            display: flex;
+            width: 850px;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+
+            transition: 0.25s ease;   /* smooth */
+        }
+
+        /* 🔥 LIGHT HOVER */
+        .auth-container:hover {
+            transform: translateY(-4px) scale(1.01);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+        }
+
+        /* LEFT */
+        .left {
+            width: 50%;
+            background: linear-gradient(135deg, #00bcd4, #006978);
+            padding: 40px;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .left h1 {
+            font-size: 36px;
+            font-weight: bold;
+        }
+
+        .left p {
+            margin-top: 15px;
+            line-height: 1.6;
+        }
+
+        /* RIGHT */
+        .right {
+            width: 50%;
+            padding: 40px;
+        }
+
+        .right h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #00796b;
+        }
+
+        .right input {
+            width: 100%;
+            padding: 14px;
+            margin: 12px 0;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+
+        /* 🔥 INPUT FOCUS */
+        .right input:focus {
+            outline: none;
+            border: 1px solid #00bcd4;
+            box-shadow: 0 0 5px #00bcd4;
+        }
+
+        .right button {
+            width: 100%;
+            padding: 14px;
+            background: #0097a7;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        /* 🔥 LIGHT BUTTON HOVER */
+        .right button:hover {
+            background: #006978;
+            transform: scale(1.02);
+        }
+
+        .right p {
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .right a {
+            color: #00796b;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- POPUP -->
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+<script>
+    alert("{{ messages[0] }}");
+</script>
+{% endif %}
+{% endwith %}
+
+<div class="main">
+
+<div class="auth-container">
+
+    <!-- LEFT -->
+    <div class="left">
+        <h1>🌊 Clean River AI</h1>
+        <p>AI-based river pollution monitoring system.</p>
+        <p>Detect plastic waste and generate alerts instantly.</p>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="right">
+
+        <h2>🔐 Login</h2>
+
+        <form method="POST">
+            <input type="text" name="username" placeholder="Enter Username" required>
+            <input type="password" name="password" placeholder="Enter Password" required>
+            <button type="submit">Login</button>
+        </form>
+
+        <p>New user? <a href="/register">Register here</a></p>
+
+    </div>
+
+</div>
+
+</div>
+
+</body>
+</html>

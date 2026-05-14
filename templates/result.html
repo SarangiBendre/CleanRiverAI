@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Result - Clean River AI</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- NAVBAR -->
+    <div class="navbar">
+
+        <div class="nav-left">
+            <h2>🌊 Clean River AI</h2>
+        </div>
+
+        <div class="nav-right">
+
+            <a href="/">
+                <button class="nav-btn">⬅ Back</button>
+            </a>
+
+            <a href="/history">
+                <button class="nav-btn">📜 History</button>
+            </a>
+
+        </div>
+
+    </div>
+
+    <h1>📊 Pollution Dashboard</h1>
+
+    <!-- HIDDEN DATA (FIX FOR JS ERROR) -->
+    <input type="hidden" id="countData" value="{{ count }}">
+
+    <!-- INFO -->
+    <div class="card">
+        <p><b>River:</b> {{ river }}</p>
+        <p><b>Location:</b> {{ location }}</p>
+        <p><b>Date:</b> {{ date }}</p>
+        <p><b>Time:</b> {{ time }}</p>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="dashboard">
+
+        <div class="card center">
+            <h3>🧠 Plastic Count</h3>
+            <h1>{{ count }}</h1>
+        </div>
+
+        <div class="card center">
+            <h3>📊 Pollution Level</h3>
+
+            {% if level == "NOT POLLUTED" %}
+            <div class="big-status low">NOT POLLUTED</div>
+            <p style="color: green; font-weight: bold;">✅ River is completely clean</p>
+
+            {% elif level == "LOW" %}
+            <div class="big-status low">LOW</div>
+
+            {% elif level == "MEDIUM" %}
+            <div class="big-status medium">MEDIUM</div>
+
+            {% else %}
+            <div class="big-status high">HIGH</div>
+            {% endif %}
+        </div>
+
+        <div class="card center">
+            <h3>📅 Timestamp</h3>
+            <p>{{ date }}</p>
+            <p>{{ time }}</p>
+        </div>
+
+    </div>
+
+    <!-- CHART -->
+    <div class="card center">
+        <h3>📈 Pollution Distribution</h3>
+
+        <div class="chart-container">
+            <canvas id="chart"></canvas>
+        </div>
+
+    </div>
+
+    <!-- IMAGES -->
+    <div class="image-row">
+
+        <div class="card image-box">
+            <h3>📸 Original</h3>
+            <img src="/{{ image }}">
+        </div>
+
+        <div class="card image-box">
+            <h3>🧠 Detection</h3>
+            <img src="/{{ output }}">
+        </div>
+
+    </div>
+
+</div>
+
+<!-- CHART SCRIPT -->
+<script>
+const count = Number(document.getElementById("countData").value);
+
+let clean, polluted;
+
+if(count === 0){
+    clean = 100;
+    polluted = 0;
+}
+else if(count <= 5){
+    clean = 80;
+    polluted = 20;
+}
+else if(count <= 15){
+    clean = 50;
+    polluted = 50;
+}
+else{
+    clean = 20;
+    polluted = 80;
+}
+
+new Chart(document.getElementById("chart"), {
+    type: "pie",
+    data: {
+        labels: ["Clean", "Polluted"],
+        datasets: [{
+            data: [clean, polluted],
+            backgroundColor: ["green", "red"]
+        }]
+    },
+    options: {
+        plugins: {
+            datalabels: {
+                color: "white",
+                font: {
+                    weight: "bold",
+                    size: 14
+                },
+                formatter: (value) => value + "%"
+            }
+        }
+    },
+    plugins: [ChartDataLabels]
+});
+</script>
+
+</body>
+</html>
