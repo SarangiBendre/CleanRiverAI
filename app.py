@@ -191,15 +191,20 @@ def predict():
     time = now.strftime("%H:%M:%S")
 
     # 🚨 EMAIL ALERT
-    if level == "HIGH":
-        send_email_alert(
-            to_email="sarangibendre04@gmail.com",   # 🔴 CHANGE
-            river=river,
-            location=location,
-            count=count,
-            level=level,
-            image_path=output_path
-        )
+    try:
+        if level == "HIGH":
+            send_email_alert(
+                to_email="sarangibendre04@gmail.com",
+                river=river,
+                location=location,
+                count=count,
+                level=level,
+                image_path=output_path
+            )
+            
+            print("Email sent successfully ✅")
+    except Exception as e:
+        print("Email Error:", e)
 
     # SAVE HISTORY
     conn = sqlite3.connect('database.db')
