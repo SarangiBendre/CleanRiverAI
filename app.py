@@ -12,17 +12,19 @@ from email.message import EmailMessage
 app = Flask(__name__)
 app.secret_key = "secret123"
 
+# ================= FOLDERS =================
 UPLOAD_FOLDER = "static/uploads"
 OUTPUT_FOLDER = "static/output"
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
-# LOAD MODEL
+# ================= LOAD MODEL =================
 model = YOLO("model/best.pt")
 
 # ================= DATABASE =================
 def init_db():
+
     conn = sqlite3.connect('database.db')
     cur = conn.cursor()
 
@@ -57,38 +59,71 @@ init_db()
 
 # ================= EMAIL FUNCTION =================
 def send_email_alert(to_email, river, location, count, level, image_path):
-    msg = EmailMessage()
-    msg['Subject'] = f'🚨 HIGH Pollution Alert | {river} - {location}'
-    msg['From'] = 'sarangibendre04@gmail.com'   # 🔴 CHANGE
-    msg['To'] = to_email
 
-    msg.set_content(f"""
+    try:
+
+        msg = EmailMessage()
+
+        msg['Subject'] = f'🚨 HIGH Pollution Alert | {river} - {location}'
+
+        # SAME EMAIL AS LOGIN
+        msg['From'] = 'digital.postboxverse@gmail.com'
+
+        msg['To'] = to_email
+
+        msg.set_content(f"""
 River: {river}
 Location: {location}
+
 Pollution Level: {level}
 Plastic Count: {count}
 
 Immediate action required!
 """)
 
-    with open(image_path, 'rb') as f:
-        msg.add_attachment(f.read(), maintype='image', subtype='jpeg', filename='result.jpg')
+        # ATTACH IMAGE
+        if os.path.exists(image_path):
 
-    with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
-        smtp.login('digital.postboxverse@gmail.com', 'ngvv izss zoth zvyw')  # 🔴 CHANGE
-        smtp.send_message(msg)
+            with open(image_path, 'rb') as f:
+
+                msg.add_attachment(
+                    f.read(),
+                    maintype='image',
+                    subtype='jpeg',
+                    filename='result.jpg'
+                )
+
+        # SEND EMAIL
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465, timeout=30) as smtp:
+
+            smtp.login(
+                'digital.postboxverse@gmail.com',
+                'ngvv izss zoth zvyw'
+            )
+
+            smtp.send_message(msg)
+
+        print("Email sent successfully ✅")
+
+    except Exception as e:
+
+        print("EMAIL ERROR:", e)
 
 # ================= HOME =================
 @app.route('/')
 def home():
+
     if "user" not in session:
         return redirect('/login')
+
     return render_template('index.html')
 
 # ================= REGISTER =================
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+
     if request.method == 'POST':
+
         username = request.form['username'].strip()
         email = request.form['email'].strip()
         password = request.form['password'].strip()
@@ -97,8 +132,15 @@ def register():
         cur = conn.cursor()
 
         cur.execute("SELECT * FROM users WHERE username=?", (username,))
-        if cur.fetchone():
+
+        existing_user = cur.fetchone()
+
+        if existing_user:
+
             flash("User already exists ❌")
+
+            conn.close()
+
             return redirect('/register')
 
         cur.execute(
@@ -110,6 +152,7 @@ def register():
         conn.close()
 
         flash("Registration Successful ✅")
+
         return redirect('/login')
 
     return render_template('register.html')
@@ -117,7 +160,9 @@ def register():
 # ================= LOGIN =================
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+
     if request.method == 'POST':
+
         username = request.form['username'].strip()
         password = request.form['password'].strip()
 
@@ -130,14 +175,21 @@ def login():
         )
 
         user = cur.fetchone()
+
         conn.close()
 
         if user:
+
             session["user"] = username
+
             flash("Login Successful ✅")
+
             return redirect('/')
+
         else:
+
             flash("Invalid Username or Password ❌")
+
             return redirect('/login')
 
     return render_template('login.html')
@@ -145,102 +197,166 @@ def login():
 # ================= LOGOUT =================
 @app.route('/logout')
 def logout():
+
     session.pop("user", None)
+
+    flash("Logged out successfully ✅")
+
     return redirect('/login')
 
 # ================= PREDICT =================
 @app.route('/predict', methods=['POST'])
 def predict():
-    if "user" not in session:
-        return redirect('/login')
 
-    file = request.files['image']
-
-    if file.filename == "":
-        return "No image ❌"
-
-    filename = file.filename.replace(" ", "_")
-    filepath = os.path.join(UPLOAD_FOLDER, filename)
-    file.save(filepath)
-
-    img = cv2.imread(filepath)
-    if img is None:
-        return "Invalid image ❌"
-
-    results = model.predict(filepath, conf=0.4)
-
-    count = sum(len(r.boxes) for r in results)
-
-    if count == 0:
-        level = "NOT POLLUTED"
-    elif count <= 5:
-        level = "LOW"
-    elif count <= 15:
-        level = "MEDIUM"
-    else:
-        level = "HIGH"
-
-    output_path = os.path.join(OUTPUT_FOLDER, "out_" + filename)
-    results[0].save(filename=output_path)
-
-    river = request.form['river']
-    location = request.form['location']
-
-    now = datetime.now()
-    date = now.strftime("%Y-%m-%d")
-    time = now.strftime("%H:%M:%S")
-
-    # 🚨 EMAIL ALERT
     try:
-        if level == "HIGH":
-            send_email_alert(
-                to_email="sarangibendre04@gmail.com",
-                river=river,
-                location=location,
-                count=count,
-                level=level,
-                image_path=output_path
-            )
-            
-            print("Email sent successfully ✅")
+
+        if "user" not in session:
+            return redirect('/login')
+
+        if 'image' not in request.files:
+            return "No image uploaded ❌"
+
+        file = request.files['image']
+
+        if file.filename == "":
+            return "No selected image ❌"
+
+        # SAFE FILE NAME
+        filename = file.filename.replace(" ", "_")
+
+        # SAVE INPUT IMAGE
+        filepath = os.path.join(UPLOAD_FOLDER, filename)
+
+        file.save(filepath)
+
+        # CHECK IMAGE
+        img = cv2.imread(filepath)
+
+        if img is None:
+            return "Invalid image ❌"
+
+        # YOLO PREDICTION
+        results = model.predict(filepath, conf=0.4)
+
+        # OBJECT COUNT
+        count = sum(len(r.boxes) for r in results)
+
+        # POLLUTION LEVEL
+        if count == 0:
+
+            level = "NOT POLLUTED"
+
+        elif count <= 5:
+
+            level = "LOW"
+
+        elif count <= 15:
+
+            level = "MEDIUM"
+
+        else:
+
+            level = "HIGH"
+
+        # SAVE OUTPUT IMAGE
+        output_filename = "out_" + filename
+
+        output_path = os.path.join(OUTPUT_FOLDER, output_filename)
+
+        results[0].save(filename=output_path)
+
+        # FORM DATA
+        river = request.form.get('river', 'Unknown River')
+
+        location = request.form.get('location', 'Unknown Location')
+
+        # DATE TIME
+        now = datetime.now()
+
+        date = now.strftime("%Y-%m-%d")
+
+        time = now.strftime("%H:%M:%S")
+
+        # ================= EMAIL ALERT =================
+        try:
+
+            if level == "HIGH":
+
+                send_email_alert(
+                    to_email="sarangibendre04@gmail.com",
+                    river=river,
+                    location=location,
+                    count=count,
+                    level=level,
+                    image_path=output_path
+                )
+
+                print("Email Alert Sent ✅")
+
+        except Exception as e:
+
+            print("EMAIL ALERT ERROR:", e)
+
+        # ================= SAVE HISTORY =================
+        conn = sqlite3.connect('database.db')
+        cur = conn.cursor()
+
+        cur.execute("""
+        INSERT INTO history
+        (username, river, location, count, level, image, output, date, time)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            session["user"],
+            river,
+            location,
+            count,
+            level,
+            filepath,
+            output_path,
+            date,
+            time
+        ))
+
+        conn.commit()
+        conn.close()
+
+        # ================= RESULT PAGE =================
+        return render_template(
+            "result.html",
+            count=count,
+            level=level,
+            image=filepath,
+            output=output_path,
+            river=river,
+            location=location,
+            date=date,
+            time=time
+        )
+
     except Exception as e:
-        print("Email Error:", e)
 
-    # SAVE HISTORY
-    conn = sqlite3.connect('database.db')
-    cur = conn.cursor()
+        print("PREDICTION ERROR:", e)
 
-    cur.execute("""
-    INSERT INTO history (username, river, location, count, level, image, output, date, time)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (
-        session["user"], river, location, count, level,
-        filepath, output_path, date, time
-    ))
-
-    conn.commit()
-    conn.close()
-
-    return render_template("result.html",
-                           count=count,
-                           level=level,
-                           image=filepath,
-                           output=output_path,
-                           river=river,
-                           location=location,
-                           date=date,
-                           time=time)
+        return f"""
+        <h2>Internal Server Error ❌</h2>
+        <p>{str(e)}</p>
+        """
 
 # ================= HISTORY =================
 @app.route('/history')
 def history():
+
     if "user" not in session:
         return redirect('/login')
 
     conn = sqlite3.connect('database.db')
     cur = conn.cursor()
 
-    cur.execute("SELECT * FROM history WHERE username=?", (session["user"],))
+    cur.execute(
+        "SELECT * FROM history WHERE username=?",
+        (session["user"],)
+    )
+
     data = cur.fetchall()
 
     conn.close()
@@ -249,4 +365,5 @@ def history():
 
 # ================= RUN =================
 if __name__ == '__main__':
+
     app.run(debug=True)
