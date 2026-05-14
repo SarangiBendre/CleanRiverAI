@@ -19,7 +19,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
 # LOAD MODEL
-model = YOLO("runs/detect/train/weights/best.pt")
+model = YOLO("best.pt")
 
 # ================= DATABASE =================
 def init_db():
